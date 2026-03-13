@@ -10,13 +10,12 @@ MOD_WIN      = 0x0008
 MOD_NOREPEAT = 0x4000
 WM_HOTKEY    = 0x0312
 WM_QUIT      = 0x0012
-HOTKEY_ID    = 1
 
 _listener_thread_id = None
 
 
 def _parse_hotkey(hotkey_str):
-    """'ctrl+shift+k' → (mods, vk)"""
+    """'ctrl+numpad0' → (mods, vk)"""
     parts = [p.strip().lower() for p in hotkey_str.split("+")]
     mods = MOD_NOREPEAT
     vk = 0
@@ -30,39 +29,58 @@ def _parse_hotkey(hotkey_str):
         elif part == "win":
             mods |= MOD_WIN
         elif part.startswith("numpad") and part[6:].isdigit():
-            vk = 0x60 + int(part[6:])  # numpad0=0x60, numpad1=0x61 ...
+            vk = 0x60 + int(part[6:])
         elif len(part) == 1:
             vk = ord(part.upper())
         elif part.startswith("f") and part[1:].isdigit():
-            vk = 0x6F + int(part[1:])  # F1=0x70, F2=0x71 ...
+            vk = 0x6F + int(part[1:])
     return mods, vk
 
 
-def _hotkey_listener(mods, vk, callback):
+def _hotkey_listener(hotkeys: dict):
+    """
+    hotkeys: {hotkey_id: (mods, vk, callback)}
+    全ホットキーを1スレッドで監視し、IDでコールバックを振り分ける
+    """
     global _listener_thread_id
     user32 = ctypes.windll.user32
     _listener_thread_id = ctypes.windll.kernel32.GetCurrentThreadId()
 
-    if not user32.RegisterHotKey(None, HOTKEY_ID, mods, vk):
-        print("[hotkey] 登録失敗 (他のアプリが同じキーを使用している可能性があります)")
-        return
+    registered = []
+    for hotkey_id, (mods, vk, _) in hotkeys.items():
+        if user32.RegisterHotKey(None, hotkey_id, mods, vk):
+            registered.append(hotkey_id)
+            print(f"[hotkey] 登録完了: id={hotkey_id}")
+        else:
+            print(f"[hotkey] 登録失敗: id={hotkey_id}")
 
-    print(f"[hotkey] 登録完了")
     msg = ctypes.wintypes.MSG()
     while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) != 0:
-        if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
+        if msg.message == WM_HOTKEY and msg.wParam in hotkeys:
+            _, _, callback = hotkeys[msg.wParam]
             callback()
 
-    user32.UnregisterHotKey(None, HOTKEY_ID)
+    for hotkey_id in registered:
+        user32.UnregisterHotKey(None, hotkey_id)
 
 
-def start_hotkey(callback, config_path="config.json"):
+def start_hotkey(callbacks: dict, config_path="config.json"):
+    """
+    callbacks: {"memo": fn, "viewer": fn, ...}
+    """
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
-    hotkey_str = config.get("hotkey", "ctrl+shift+k")
-    mods, vk = _parse_hotkey(hotkey_str)
 
-    t = threading.Thread(target=_hotkey_listener, args=(mods, vk, callback), daemon=True)
+    hotkey_config = config.get("hotkeys", {})
+
+    # {hotkey_id: (mods, vk, callback)}
+    hotkeys = {}
+    for hotkey_id, (name, hotkey_str) in enumerate(hotkey_config.items(), start=1):
+        if name in callbacks:
+            mods, vk = _parse_hotkey(hotkey_str)
+            hotkeys[hotkey_id] = (mods, vk, callbacks[name])
+
+    t = threading.Thread(target=_hotkey_listener, args=(hotkeys,), daemon=True)
     t.start()
 
 

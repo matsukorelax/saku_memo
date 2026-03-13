@@ -6,6 +6,8 @@ from db import initialize, save_entry
 from hotkey import start_hotkey, stop_hotkeys
 from tray import start_tray
 from ui import show_input_form
+from viewer import show_viewer
+from ticket_form import show_ticket_form
 
 
 def main():
@@ -15,24 +17,29 @@ def main():
 
     event_queue = queue.Queue() #event_queueにQueue()の機能を持たせる
 
-    # ホットキーが押されたらキューに "show" を積む
-    def on_hotkey():
-        print("on_hotkey called")
-        event_queue.put("show")
-
-    # トレイの「終了」が押されたらキューに "quit" を積む
-    def on_quit(icon):
-        icon.stop()
-        event_queue.put("quit")
-
     # 入力確定時の処理
     def on_submit(text):
         save_entry(text)
 
+    # ホットキーコールバック
+    def on_memo():
+        event_queue.put("show")
+
+    def on_viewer():
+        event_queue.put("viewer")
+
+    def on_ticket():
+        event_queue.put("ticket")
+
+    # トレイコールバック
     def on_show():
         event_queue.put("show")
 
-    start_hotkey(on_hotkey)
+    def on_quit(icon):
+        icon.stop()
+        event_queue.put("quit")
+
+    start_hotkey({"memo": on_memo, "viewer": on_viewer, "ticket": on_ticket})
     start_tray(on_show, on_quit)
 
     def process_events():
@@ -44,6 +51,10 @@ def main():
                         show_input_form(root, on_submit=on_submit)
                     except Exception as e:
                         print(f"[error] show_input_form: {e}")
+                elif event == "viewer":
+                    show_viewer(root)
+                elif event == "ticket":
+                    show_ticket_form(root)
                 elif event == "quit":
                     stop_hotkeys()
                     root.quit()

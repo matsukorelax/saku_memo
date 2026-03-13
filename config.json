@@ -1,3 +1,24 @@
 {
-    "hotkey": "ctrl+numpad0"
+    "hotkeys": {
+        "memo":   "ctrl+numpad0",
+        "viewer": "ctrl+numpad9",
+        "ticket": "ctrl+numpad1"
+    },
+    "devices": {
+        "device_pc":         "PC",
+        "device_mac":        "Mac",
+        "device_Nexus_6P":   "Nexus 6P",
+        "device_Galaxy_S8":  "Galaxy S8",
+        "device_iPhone_13":  "iPhone 13",
+        "device_iPhone_SE2": "iPhone SE2"
+    },
+    "envs": {
+        "env_stg":   "stg",
+        "env_dev01": "dev01",
+        "env_dev02": "dev02",
+        "env_dev03": "dev03",
+        "env_dev04": "dev04",
+        "env_dev05": "dev05",
+        "prd":       "prd"
+    }
 }

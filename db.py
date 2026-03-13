@@ -14,10 +14,24 @@ def initialize():
             CREATE TABLE IF NOT EXISTS entries (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 text       TEXT NOT NULL,
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                status     TEXT NOT NULL DEFAULT 'open',
+                file_path  TEXT,
+                url        TEXT
             )
         """)
-
+        try:
+            conn.execute("ALTER TABLE entries ADD COLUMN status TEXT NOT NULL DEFAULT 'open'")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE entries ADD COLUMN file_path TEXT")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE entries ADD COLUMN url TEXT")
+        except Exception:
+            pass
 
 def save_entry(text: str):
     created_at = datetime.now(timezone.utc).isoformat()
@@ -27,3 +41,22 @@ def save_entry(text: str):
             (text, created_at),
         )
     print(f"[db] 保存: {text!r} @ {created_at}")
+
+def get_entries() -> list[dict]:
+    with get_connection() as conn:
+        all_data = conn.execute(
+            "SELECT id, text, created_at, status FROM entries ORDER BY created_at DESC"
+        )
+        rows = all_data.fetchall()
+
+        result = []
+        for row in rows:
+            result.append({"id": row[0], "text": row[1], "created_at": row[2], "status":row[3]})
+        return result
+
+def update_status(entry_id: int, status: str):
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE entries SET status = ? WHERE id = ?",
+            (status, entry_id)
+        )
