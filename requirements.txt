@@ -1,0 +1,6 @@
+pillow==12.1.1
+pystray==0.19.5
+six==1.17.0
+
+# Linux only
+python-xlib==0.33; sys_platform == "linux"
