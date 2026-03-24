@@ -2,8 +2,9 @@ import json
 import threading
 import tkinter as tk
 from tkinter import ttk
-from db import get_entries
+from db import get_entries, save_ticket
 from dify import run_ticket_helper
+from n8n import notify_ticket
 
 BG     = "#1e1e1e"
 FG     = "#ffffff"
@@ -125,6 +126,8 @@ def show_ticket_form(root):
             result_text.insert("end", result)
             result_text.config(state="disabled")
             submit_btn.config(state="normal")
+            ticket_id = save_ticket(inputs, result)
+            notify_ticket(ticket_id, inputs, result)
 
         threading.Thread(target=call_dify, daemon=True).start()
 

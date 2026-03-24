@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from datetime import datetime, timezone
 
@@ -32,6 +33,15 @@ def initialize():
             conn.execute("ALTER TABLE entries ADD COLUMN url TEXT")
         except Exception:
             pass
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS tickets (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                inputs     TEXT NOT NULL,
+                body       TEXT NOT NULL,
+                status     TEXT NOT NULL DEFAULT 'open',
+                created_at TEXT NOT NULL
+            )
+        """)
 
 def save_entry(text: str):
     created_at = datetime.now(timezone.utc).isoformat()
@@ -60,3 +70,31 @@ def update_status(entry_id: int, status: str):
             "UPDATE entries SET status = ? WHERE id = ?",
             (status, entry_id)
         )
+
+def save_ticket(inputs: dict, body: str) -> int:
+    created_at = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        cur = conn.execute(
+            "INSERT INTO tickets (inputs, body, created_at) VALUES (?, ?, ?)",
+            (json.dumps(inputs, ensure_ascii=False), body, created_at),
+        )
+        return cur.lastrowid
+
+def get_tickets() -> list[dict]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT id, inputs, body, status, created_at FROM tickets ORDER BY created_at DESC"
+        ).fetchall()
+    return [
+        {"id": r[0], "inputs": json.loads(r[1]), "body": r[2], "status": r[3], "created_at": r[4]}
+        for r in rows
+    ]
+
+def update_ticket_status(ticket_id: int, status: str):
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE tickets SET status = ? WHERE id = ?",
+            (status, ticket_id)
+        )
+    from n8n import notify_status
+    notify_status(ticket_id, status)

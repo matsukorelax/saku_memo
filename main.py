@@ -4,6 +4,7 @@ import tkinter as tk #入力ウィンドウの表示
 
 from db import initialize, save_entry
 from hotkey import start_hotkey, stop_hotkeys
+from ticket_viewer import show_ticket
 from tray import start_tray
 from ui import show_input_form
 from viewer import show_viewer
@@ -31,6 +32,9 @@ def main():
     def on_ticket():
         event_queue.put("ticket")
 
+    def on_ticket_view():                                                
+      event_queue.put("ticket_view")  
+
     # トレイコールバック
     def on_show():
         event_queue.put("show")
@@ -39,7 +43,7 @@ def main():
         icon.stop()
         event_queue.put("quit")
 
-    start_hotkey({"memo": on_memo, "viewer": on_viewer, "ticket": on_ticket})
+    start_hotkey({"memo": on_memo, "viewer": on_viewer, "ticket": on_ticket, "ticket_view": on_ticket_view})
     start_tray(on_show, on_quit)
 
     def process_events():
@@ -55,6 +59,8 @@ def main():
                     show_viewer(root)
                 elif event == "ticket":
                     show_ticket_form(root)
+                elif event == "ticket_view":
+                    show_ticket(root)
                 elif event == "quit":
                     stop_hotkeys()
                     root.quit()
