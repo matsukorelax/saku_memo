@@ -3,3 +3,9 @@ skuldop.db
 __pycache__/
 *.pyc
 venv/
+
+# ActivityWatch export data (contains company/app window title logs)
+aw_*.json
+
+# SQLite databases
+*.db

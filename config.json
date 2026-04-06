@@ -4,7 +4,8 @@
         "viewer": "ctrl+numpad9",
         "ticket": "ctrl+numpad1",
         "ticket_view": "ctrl+numpad2",
-        "gantt_chart": "ctrl+numpad3"
+        "make_gantt": "ctrl+numpad3",
+        "bottleneck": "ctrl+numpad4"
     },
     "devices": {
         "device_pc":         "PC",

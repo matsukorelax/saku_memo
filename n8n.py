@@ -16,14 +16,14 @@ def _load_env(env_path=".env"):
             os.environ.setdefault(key.strip(), value.strip())
 
 
-def _post(payload: dict):
+def _post(payload: dict, url_env: str = "N8N_WEBHOOK_URL"):
     _load_env()
-    url      = os.environ.get("N8N_WEBHOOK_URL", "")
+    url      = os.environ.get(url_env, "") or os.environ.get("N8N_WEBHOOK_URL", "")
     user     = os.environ.get("N8N_BASIC_USER", "")
     password = os.environ.get("N8N_BASIC_PASS", "")
 
     if not url:
-        print("[n8n] N8N_WEBHOOK_URL が未設定のためスキップ")
+        print(f"[n8n] {url_env} が未設定のためスキップ")
         return
 
     import base64
@@ -66,3 +66,25 @@ def notify_status(ticket_id: int, status: str):
         "ticket_id": ticket_id,
         "status":    status,
     })
+
+
+def notify_gantt(ascii_chart: str):
+    """タスク登録時にASCIIガントチャートをn8nへ送信する。"""
+    _post(
+        {"type": "gantt", "ascii_chart": ascii_chart},
+        url_env="N8N_GANTT_WEBHOOK_URL",
+    )
+
+
+def notify_bottleneck(task_name: str, end_date: str, ascii_chart: str, bottlenecks: str):
+    """ボトルネック追記時にn8nへ送信する。n8nがDify→Slackへ連携する。"""
+    _post(
+        {
+            "type":        "bottleneck",
+            "task_name":   f"タスク名:{task_name}",
+            "end_date":    f"終了日:{end_date}",
+            "ascii_chart": ascii_chart,
+            "bottlenecks": bottlenecks,
+        },
+        url_env="N8N_BOTTLENECK_WEBHOOK_URL",
+    )

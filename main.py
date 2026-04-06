@@ -3,6 +3,8 @@ import sys #終了処理、実行環境
 import tkinter as tk #入力ウィンドウの表示
 
 from db import initialize, save_entry
+from gantt_chart.gantt_form import show_gantt_form
+from gantt_chart.bottleneck_form import show_bottleneck_form
 from hotkey import start_hotkey, stop_hotkeys
 from ticket_viewer import show_ticket
 from tray import start_tray
@@ -33,7 +35,13 @@ def main():
         event_queue.put("ticket")
 
     def on_ticket_view():                                                
-      event_queue.put("ticket_view")  
+        event_queue.put("ticket_view")  
+
+    def on_gantt():
+        event_queue.put("make_gantt")
+
+    def on_bottleneck():
+        event_queue.put("bottleneck")
 
     # トレイコールバック
     def on_show():
@@ -43,7 +51,14 @@ def main():
         icon.stop()
         event_queue.put("quit")
 
-    start_hotkey({"memo": on_memo, "viewer": on_viewer, "ticket": on_ticket, "ticket_view": on_ticket_view})
+    start_hotkey({
+        "memo": on_memo, 
+        "viewer": on_viewer, 
+        "ticket": on_ticket, 
+        "ticket_view": on_ticket_view,
+        "make_gantt":  on_gantt,
+        "bottleneck":  on_bottleneck,
+        })
     start_tray(on_show, on_quit)
 
     def process_events():
@@ -61,6 +76,10 @@ def main():
                     show_ticket_form(root)
                 elif event == "ticket_view":
                     show_ticket(root)
+                elif event == "make_gantt":
+                    show_gantt_form(root)
+                elif event == "bottleneck":
+                    show_bottleneck_form(root)
                 elif event == "quit":
                     stop_hotkeys()
                     root.quit()
