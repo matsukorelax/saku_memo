@@ -5,7 +5,7 @@
         "ticket": "ctrl+numpad1",
         "ticket_view": "ctrl+numpad2",
         "make_gantt": "ctrl+numpad3",
-        "bottleneck": "ctrl+numpad4"
+        "task_detail": "ctrl+numpad4"
     },
     "devices": {
         "device_pc":         "PC",

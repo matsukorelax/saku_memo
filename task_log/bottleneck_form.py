@@ -1,6 +1,6 @@
 import tkinter as tk
-from gantt_chart.gantt_db import initialize, get_tasks, add_bottleneck, get_bottlenecks
-from gantt_chart.gantt_renderer import build_ascii_chart
+from task_log.task_db import initialize, get_tasks, add_bottleneck, get_bottlenecks
+from task_log.task_renderer import build_report
 from n8n import notify_bottleneck
 
 BG     = "#1e1e1e"
@@ -56,14 +56,14 @@ def show_bottleneck_form(root):
 
         add_bottleneck(task_id=task_id, content=content)
 
-        chart   = build_ascii_chart(get_tasks())
-        bns     = get_bottlenecks(task_id)
-        bns_text = "\n".join(f"- [{b['created_at']}] {b['content']}" for b in bns)
+        tasks = get_tasks()
+        bottlenecks_map = {t["id"]: get_bottlenecks(t["id"]) for t in tasks}
+        report = build_report(tasks, bottlenecks_map)
         notify_bottleneck(
             task_name=task["name"],
             end_date=task["end_date"],
-            ascii_chart=chart,
-            bottlenecks=bns_text,
+            ascii_chart=report,
+            bottlenecks="",
         )
         win.destroy()
 
